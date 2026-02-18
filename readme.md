@@ -1,13 +1,8 @@
-# JJK Domain Expansions 👹
-
-## About
-Let's immerse in Jujutsu Kaisen world by pretending to be one of the strongest jujutsu sorcerers.
-
-_Let's curse each other to our heart's content!_ - Suguru Geto
+# Shadow Clone Technique🧑‍🤝‍🧑
 
 ## Demo
 
-URL: [JJK.SS.MY](https://jjk.ss.my)
+URL: [NARUTO.SS.MY](https://naruto.ss.my)
 
 ![Demo GIF](media/demo.gif)
 
@@ -19,19 +14,11 @@ URL: [JJK.SS.MY](https://jjk.ss.my)
 
 3. Allow camera and microphone access when asked
 
-4. Hold the handsign of your chosen technique on camera
+4. Hold the handsign of Shadow Clone Jutsu on camera
 
-5. A microphone logo will appear, say the correct keyword
+5. A microphone logo will appear, say Shadow Clone Jutsu correctly
 
-6. A scene of the unleashed technique from JJK will be playing
-
-## Supported Techniques
-
-- Malevolent Shrine (keyword: _domain expansion_)
-
-- Infinite Void (keyword: _domain expansion_)
-
-- Mahoraga (keyword: _with this treasure I summon_)
+6. A lot of clones will appear on screen
 
 
 ## Tech Stacks
@@ -48,7 +35,7 @@ URL: [JJK.SS.MY](https://jjk.ss.my)
 
 ## Todo
 
-- Adding more Domain Expansions
+- Adding more Jutsu
 - Supporting Japanese language
 
 ## License

@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
-  <title>JJK Domain Expansions</title>
+  <title>Shadow Clone Technique</title>
 
   <!-- Require the peer dependencies of handpose. -->
   <script src="https://unpkg.com/@tensorflow/tfjs-core@4.20.0/dist/tf-core.js"></script>
@@ -346,21 +346,8 @@
     <!-- Intro Modal -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
-        <div class="modal-header">Supported Techniques</div>
-        <ul class="techniques-list">
-          <li class="technique-item">
-            <div class="technique-name">Malevolent Shrine</div>
-            <div class="technique-keyword">Keyword: domain expansion</div>
-          </li>
-          <li class="technique-item">
-            <div class="technique-name">Infinite Void</div>
-            <div class="technique-keyword">Keyword: domain expansion</div>
-          </li>
-          <li class="technique-item">
-            <div class="technique-name">Mahoraga</div>
-            <div class="technique-keyword">Keyword: with this treasure I summon</div>
-          </li>
-        </ul>
+        <div class="modal-header">Instructions</div>
+        <img src="media/demo.gif" style="width: 100%; max-height: 60vh; object-fit: contain; border-radius: 12px; margin-bottom: 20px; display: block;" />
         <button @click="startCameraFromModal" class="modal-button" :disabled="loading">
           {{ loading ? 'Starting...' : '🎥 Start Camera' }}
         </button>
@@ -405,22 +392,11 @@
     <div class="transcription-display" v-if="voiceCommandExpiryTime > Date.now() || transcriptionText">
       <div class="transcript-text">{{ transcriptionText || 'Listening...' }}</div>
     </div>
-
-    <!-- Hidden video elements for different summons -->
-    <video ref="malevolentShrineVideo" class="summon-video" playsinline muted>
-      <source src="media/malevolent-shrine.mp4" type="video/mp4">
-    </video>
-    <video ref="infiniteVoidVideo" class="summon-video" playsinline muted>
-      <source src="media/infinite-void.mp4" type="video/mp4">
-    </video>
-    <video ref="mahoragaVideo" class="summon-video" playsinline muted>
-      <source src="media/mahoraga.mp4" type="video/mp4">
-    </video>
   </div>
 
   <script>
 
-    const audio = new Audio('media/specialz.mp3');
+    const audio = new Audio('media/naruto.mp3');
     audio.loop = true; // Make it loop
 
     new Vue({
@@ -468,7 +444,7 @@
           voiceCommandExpiryTime: Date.now(),
           currentTime: Date.now(),
 
-          currentSummon: null,
+          currentJutsu: null,
           
           // Track both hands for combined gestures
           currentHandGestures: {
@@ -493,78 +469,6 @@
       methods: {
         updateTime() {
             this.currentTime = Date.now();
-        },
-        playSummonVideo(videoRef) {
-          if (this.isPlayingSummonVideo) return;
-          
-          const summonVideo = this.$refs[videoRef];
-          const canvas = this.$refs.canvas;
-          const ctx = canvas.getContext('2d');
-          
-          this.isPlayingSummonVideo = true;
-          this.currentVideoElement = summonVideo;
-          
-          // Reset and play the video
-          summonVideo.currentTime = 0;
-          summonVideo.play().catch(err => {
-            console.error('Error playing summon video:', err);
-            this.isPlayingSummonVideo = false;
-            return;
-          });
-          
-          // Function to draw video frames to canvas
-          const drawVideoFrame = () => {
-            if (!this.isPlayingSummonVideo || summonVideo.paused || summonVideo.ended) {
-              this.isPlayingSummonVideo = false;
-              if (this.summonAnimationFrame) {
-                cancelAnimationFrame(this.summonAnimationFrame);
-                this.summonAnimationFrame = null;
-              }
-              this.currentVideoElement = null;
-              // Clear canvas after video ends
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              return;
-            }
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Calculate dimensions to cover the canvas while maintaining aspect ratio
-            const videoAspect = summonVideo.videoWidth / summonVideo.videoHeight;
-            const canvasAspect = canvas.width / canvas.height;
-            
-            let drawWidth, drawHeight, drawX, drawY;
-            
-            if (videoAspect > canvasAspect) {
-              // Video is wider than canvas
-              drawHeight = canvas.height;
-              drawWidth = drawHeight * videoAspect;
-              drawX = (canvas.width - drawWidth) / 2;
-              drawY = 0;
-            } else {
-              // Video is taller than canvas
-              drawWidth = canvas.width;
-              drawHeight = drawWidth / videoAspect;
-              drawX = 0;
-              drawY = (canvas.height - drawHeight) / 2;
-            }
-            
-            // Draw the video frame
-            ctx.drawImage(summonVideo, drawX, drawY, drawWidth, drawHeight);
-            
-            // Continue animation
-            this.summonAnimationFrame = requestAnimationFrame(drawVideoFrame);
-          };
-          
-          // Start drawing video frames
-          drawVideoFrame();
-          
-          // When video ends, stop playing
-          summonVideo.onended = () => {
-            this.isPlayingSummonVideo = false;
-            this.currentVideoElement = null;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          };
         },
         
         setupSpeechRecognition() {
@@ -608,42 +512,13 @@
             
             const lowerTranscript = this.transcriptionText.toLowerCase();
             
-            // Check for "domain expansion" trigger
-            if (lowerTranscript.includes('domain expansion')) {
-              console.log('Domain Expansion detected! Current summon:', this.currentSummon);
+            // Check for "shadow clone technique" trigger
+            if (lowerTranscript.includes('shadow clone technique')
+                || lowerTranscript.includes('shadow clone jutsu')) {
               
-              if (this.currentSummon === 'malevolent-shrine') {
-                console.log('Playing malevolent-shrine.mp4');
-                this.playSummonVideo('malevolentShrineVideo');
-              } else if (this.currentSummon === 'infinite-void') {
-                console.log('Playing infinite-void.mp4');
-                this.playSummonVideo('infiniteVoidVideo');
-              }
-
-              // Resume background audio when microphone is hidden
-                if (this.backgroundAudio.paused) {
-                    this.backgroundAudio.play().catch(err => {
-                        console.error('Error resuming audio:', err);
-                    });
-                    console.log('Background audio resumed');
-                }
-
-                // Keep transcription visible for 2 seconds after stopping
-                setTimeout(() => {
-                    this.transcriptionText = '';
-                }, 2000);
-              
-              // Hide microphone and stop recognition
-              this.voiceCommandExpiryTime = new Date(Date.now() - 100);
-              this.stopSpeechRecognition();
-            } 
-            // Check for "with this treasure i summon" trigger
-            else if (lowerTranscript.includes('with this treasure i summon')) {
-              console.log('With this treasure I summon detected! Current summon:', this.currentSummon);
-              
-              if (this.currentSummon === 'mahoraga') {
-                console.log('Playing mahoraga.mp4');
-                this.playSummonVideo('mahoragaVideo');
+              if (this.currentJutsu === 'shadow-clone-technique') {
+                console.log('A jutsu is detected! Current jutsu:', this.currentJutsu);
+                alert('boom')
               }
 
               // Resume background audio when microphone is hidden
@@ -747,11 +622,6 @@
             // Setup canvas
             this.setupCanvas();
             
-            // Preload all summon videos
-            this.$refs.malevolentShrineVideo.load();
-            this.$refs.infiniteVoidVideo.load();
-            this.$refs.mahoragaVideo.load();
-            
             // Start video
             this.$refs.video.play();
             
@@ -852,57 +722,42 @@
         setupGestureEstimator() {
           const knownGestures = [];
           
-          // Finger Crossed Gesture
-          const fingerCrossedGesture = new fp.GestureDescription('infinite_void');
-          for(let finger of [fp.Finger.Thumb, fp.Finger.Pinky, fp.Finger.Ring]) {
-            fingerCrossedGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
-            fingerCrossedGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
-          }
-          // thumb
-          fingerCrossedGesture.addCurl(fp.Finger.Thumb, fp.FingerCurl.FullCurl, 0.3);
-          fingerCrossedGesture.addCurl(fp.Finger.Thumb, fp.FingerCurl.NoCurl, 0.3);
-          fingerCrossedGesture.addCurl(fp.Finger.Thumb, fp.FingerCurl.HalfCurl, 1.0);
+          // Shadow Clone Technique Left
+          const jutsuLeftGesture = new fp.GestureDescription('shadow_clone_technique_left');
 
-          fingerCrossedGesture.addCurl(fp.Finger.Index, fp.FingerCurl.NoCurl, 1.0);
-          fingerCrossedGesture.addDirection(fp.Finger.Index, fp.FingerDirection.VerticalUp, 1.0);
-          fingerCrossedGesture.addCurl(fp.Finger.Middle, fp.FingerCurl.HalfCurl, 1.0);
-          fingerCrossedGesture.addCurl(fp.Finger.Middle, fp.FingerCurl.FullCurl, 0.3);
-          fingerCrossedGesture.addCurl(fp.Finger.Middle, fp.FingerCurl.NoCurl, 0.3);
-          knownGestures.push(fingerCrossedGesture);
-          
-          // Malevolent Shrine Left
-          const malevolentShrineLeftGesture = new fp.GestureDescription('malevolent_shrine_left');
-          for(let finger of [fp.Finger.Thumb, fp.Finger.Middle, fp.Finger.Index]) {
-            malevolentShrineLeftGesture.addCurl(finger, fp.FingerCurl.NoCurl, 1.0);
-            malevolentShrineLeftGesture.addDirection(finger, fp.FingerDirection.DiagonalUpRight, 1.0);
+          // Removing thumb for more accuracy
+
+          for(let finger of [fp.Finger.Middle, fp.Finger.Index]) {
+            jutsuLeftGesture.addCurl(finger, fp.FingerCurl.NoCurl, 1.0);
+            jutsuLeftGesture.addDirection(finger, fp.FingerDirection.VerticalUp, 1);
+            jutsuLeftGesture.addDirection(finger, fp.FingerDirection.DiagonalUpRight, 0.9);
           }
           for(let finger of [fp.Finger.Ring, fp.Finger.Pinky]) {
-            malevolentShrineLeftGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
-            malevolentShrineLeftGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
-            malevolentShrineLeftGesture.addDirection(finger, fp.FingerDirection.DiagonalUpRight, 1.0);
+            jutsuLeftGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
+            jutsuLeftGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
+            jutsuLeftGesture.addDirection(finger, fp.FingerDirection.VerticalUp, 1);
+            jutsuLeftGesture.addDirection(finger, fp.FingerDirection.DiagonalUpRight, 0.9);
           }
-          knownGestures.push(malevolentShrineLeftGesture);
+
+          knownGestures.push(jutsuLeftGesture);
           
-          // Malevolent Shrine Right
-          const malevolentShrineRightGesture = new fp.GestureDescription('malevolent_shrine_right');
-          for(let finger of [fp.Finger.Thumb, fp.Finger.Middle, fp.Finger.Index]) {
-            malevolentShrineRightGesture.addCurl(finger, fp.FingerCurl.NoCurl, 1.0);
-            malevolentShrineRightGesture.addDirection(finger, fp.FingerDirection.DiagonalUpLeft, 1.0);
+          // Shadow Clone Technique Right
+          const jutsuRightGesture = new fp.GestureDescription('shadow_clone_technique_right');
+
+          // Removing thumb for more accuracy
+
+          for(let finger of [fp.Finger.Middle, fp.Finger.Index]) {
+            jutsuRightGesture.addCurl(finger, fp.FingerCurl.NoCurl, 1.0);
+            jutsuRightGesture.addDirection(finger, fp.FingerDirection.HorizontalLeft, 1);
+            jutsuRightGesture.addDirection(finger, fp.FingerDirection.DiagonalUpLeft, 0.9);
           }
           for(let finger of [fp.Finger.Ring, fp.Finger.Pinky]) {
-            malevolentShrineRightGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
-            malevolentShrineRightGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
-            malevolentShrineRightGesture.addDirection(finger, fp.FingerDirection.DiagonalUpLeft, 1.0);
+            jutsuRightGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
+            jutsuRightGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
+            jutsuRightGesture.addDirection(finger, fp.FingerDirection.HorizontalLeft, 1);
+            jutsuRightGesture.addDirection(finger, fp.FingerDirection.DiagonalUpLeft, 0.9);
           }
-          knownGestures.push(malevolentShrineRightGesture);
-
-          // Hand Fist Gesture
-          const mahoragaGesture = new fp.GestureDescription('mahoraga');
-          for(let finger of [fp.Finger.Index, fp.Finger.Middle, fp.Finger.Ring, fp.Finger.Pinky]) {
-            mahoragaGesture.addCurl(finger, fp.FingerCurl.FullCurl, 1.0);
-            mahoragaGesture.addCurl(finger, fp.FingerCurl.HalfCurl, 0.9);
-          }
-          knownGestures.push(mahoragaGesture);
+          knownGestures.push(jutsuRightGesture);
           
           this.gestureEstimator = new fp.GestureEstimator(knownGestures);
         },
@@ -924,58 +779,49 @@
           const canvas = this.$refs.canvas;
           const ctx = canvas.getContext("2d");
           
-          // Only clear and draw hands if not playing summon video
-          if (!this.isPlayingSummonVideo) {
-            // Clear canvas
-            ctx.clearRect(0, 0, this.config.video.width, this.config.video.height);
+          // Clear canvas
+          ctx.clearRect(0, 0, this.config.video.width, this.config.video.height);
+          
+          try {
+            // Get hand landmarks
+            const hands = await this.detector.estimateHands(video, {
+              flipHorizontal: true
+            });
             
-            try {
-              // Get hand landmarks
-              const hands = await this.detector.estimateHands(video, {
-                flipHorizontal: true
-              });
+            // Reset gesture results and hand tracking
+            this.gestureResults = { left: '', right: '' };
+            this.currentHandGestures = { left: null, right: null };
+            
+            for (const hand of hands) {
+              this.drawHand(hand, ctx);
               
-              // Reset gesture results and hand tracking
-              this.gestureResults = { left: '', right: '' };
-              this.currentHandGestures = { left: null, right: null };
+              const est = this.gestureEstimator.estimate(hand.keypoints3D, 9);
               
-              for (const hand of hands) {
-                this.drawHand(hand, ctx);
+              if (est.gestures.length > 0) {
+                // Find gesture with highest score
+                let result = est.gestures.reduce((p, c) => {
+                  return (p.score > c.score) ? p : c;
+                });
                 
-                const est = this.gestureEstimator.estimate(hand.keypoints3D, 9);
+                const chosenHand = hand.handedness.toLowerCase();
+                // Track current hand gesture for combined detection
+                this.currentHandGestures[chosenHand] = result;
                 
-                if (est.gestures.length > 0) {
-                  // Find gesture with highest score
-                  let result = est.gestures.reduce((p, c) => {
-                    return (p.score > c.score) ? p : c;
-                  });
-                  
-                  const chosenHand = hand.handedness.toLowerCase();
-                  // Track current hand gesture for combined detection
-                  this.currentHandGestures[chosenHand] = result.name;
-                  
-                  this.updateDebugInfo(est.poseData, chosenHand);
-                }
+                this.updateDebugInfo(est.poseData, chosenHand);
               }
-
-              // Check for Malevolent Shrine (both hands performing the gesture)
-              if (this.currentHandGestures.left === 'malevolent_shrine_left' && 
-                  this.currentHandGestures.right === 'malevolent_shrine_right') {
-                this.currentSummon = 'malevolent-shrine';
-                this.voiceCommandExpiryTime = new Date(Date.now() + 1000);
-              } else if (this.currentHandGestures.left === 'mahoraga' && 
-                  this.currentHandGestures.right === 'mahoraga') {
-                  this.currentSummon = 'mahoraga';
-                  this.voiceCommandExpiryTime = new Date(Date.now() + 1000)
-              } else if (this.currentHandGestures.left === 'infinite_void' || 
-                  this.currentHandGestures.right === 'infinite_void') {
-                  this.currentSummon = 'infinite-void';
-                  this.voiceCommandExpiryTime = new Date(Date.now() + 1000)
-              }
-              
-            } catch (error) {
-              console.error('Error estimating hands:', error);
             }
+
+            // Check for Shadow Clone Technique hand signs
+            if (this.currentHandGestures.left?.name === 'shadow_clone_technique_left' 
+                && this.currentHandGestures.left?.score > 9.6 
+                && this.currentHandGestures.right?.name === 'shadow_clone_technique_right' 
+                && this.currentHandGestures.right?.score > 9.6) {
+              this.currentJutsu = 'shadow-clone-technique';
+              this.voiceCommandExpiryTime = new Date(Date.now() + 1000);
+            }
+            
+          } catch (error) {
+            console.error('Error estimating hands:', error);
           }
           
           // Continue loop
