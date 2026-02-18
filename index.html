@@ -87,6 +87,14 @@
       pointer-events: none;
     }
 
+    .shadow-clone-canvas {
+      z-index: 10;
+    }
+
+    .clone-hidden {
+      opacity: 0;
+    }
+
     .pose-result {
       font-size: 120px;
       padding: 40px;
@@ -341,7 +349,7 @@
 </head>
 
 <body>
-  <a class="github-fork-ribbon" href="https://github.com/natsu90/jjk" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+  <a class="github-fork-ribbon" href="https://github.com/natsu90/naruto" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
   <div id="app">
     <!-- Intro Modal -->
     <div v-if="showModal" class="modal-overlay">
@@ -372,8 +380,9 @@
 
     <div class="container">
       <div id="video-container">
-        <video ref="video" id="pose-video" class="layer" playsinline></video>
-        <canvas ref="canvas" id="pose-canvas" class="layer"></canvas>
+        <video ref="video" id="pose-video" class="layer" :class="{ 'clone-hidden': shadowCloneActive }" playsinline></video>
+        <canvas ref="canvas" id="pose-canvas" class="layer" :class="{ 'clone-hidden': shadowCloneActive }"></canvas>
+        <canvas ref="cloneCanvas" id="clone-canvas" class="layer shadow-clone-canvas" v-show="shadowCloneActive"></canvas>
         <div v-if="gestureResults.left" id="pose-result-left" class="layer pose-result">
           {{ gestureResults.left }}
         </div>
@@ -384,12 +393,12 @@
     </div>
 
     <!-- Microphone button moved outside container with fixed positioning -->
-    <button class="microphone-button" :class="{ active: voiceCommandExpiryTime > Date.now() }" v-if="cameraActive && voiceCommandExpiryTime > Date.now()">
+    <button class="microphone-button" :class="{ active: voiceCommandExpiryTime > Date.now() }" v-if="cameraActive && voiceCommandExpiryTime > Date.now() && !shadowCloneActive">
         🎙️
     </button>
 
     <!-- Transcription display at center of screen -->
-    <div class="transcription-display" v-if="voiceCommandExpiryTime > Date.now() || transcriptionText">
+    <div class="transcription-display" v-if="(voiceCommandExpiryTime > Date.now() || transcriptionText) && !shadowCloneActive">
       <div class="transcript-text">{{ transcriptionText || 'Listening...' }}</div>
     </div>
   </div>
@@ -445,6 +454,11 @@
           currentTime: Date.now(),
 
           currentJutsu: null,
+
+          // Shadow Clone Effect
+          shadowCloneActive: false,
+          shadowCloneExpiryTime: Date.now(),
+          shadowCloneAnimationFrame: null,
           
           // Track both hands for combined gestures
           currentHandGestures: {
@@ -518,7 +532,7 @@
               
               if (this.currentJutsu === 'shadow-clone-technique') {
                 console.log('A jutsu is detected! Current jutsu:', this.currentJutsu);
-                alert('boom')
+                this.startShadowCloneEffect();
               }
 
               // Resume background audio when microphone is hidden
@@ -652,6 +666,11 @@
             this.estimationLoop = null;
           }
 
+          // Stop shadow clone effect if active
+          if (this.shadowCloneActive) {
+            this.stopShadowCloneEffect();
+          }
+
           // Stop summon video if playing
           if (this.isPlayingSummonVideo && this.currentVideoElement) {
             this.isPlayingSummonVideo = false;
@@ -767,6 +786,71 @@
           canvas.width = this.config.video.width;
           canvas.height = this.config.video.height;
         },
+
+        startShadowCloneEffect() {
+          this.shadowCloneActive = true;
+          this.shadowCloneExpiryTime = Date.now() + 3000;
+          this.stopSpeechRecognition();
+
+          // Resume background audio
+          if (this.backgroundAudio.paused) {
+            this.backgroundAudio.play().catch(err => {
+              console.error('Error resuming audio:', err);
+            });
+          }
+
+          const video = this.$refs.video;
+          const cloneCanvas = this.$refs.cloneCanvas;
+          cloneCanvas.width = video.videoWidth;
+          cloneCanvas.height = video.videoHeight;
+
+          this.renderShadowClones();
+        },
+
+        renderShadowClones() {
+          if (!this.shadowCloneActive) return;
+
+          const video = this.$refs.video;
+          const cloneCanvas = this.$refs.cloneCanvas;
+          const ctx = cloneCanvas.getContext('2d');
+
+          const cols = 4;
+          const rows = 3;
+          const tileW = cloneCanvas.width / cols;
+          const tileH = cloneCanvas.height / rows;
+
+          ctx.clearRect(0, 0, cloneCanvas.width, cloneCanvas.height);
+
+          for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+              const x = col * tileW;
+              const y = row * tileH;
+              ctx.save();
+              // Mirror horizontally to match the scaleX(-1) on the video
+              ctx.translate(x + tileW, y);
+              ctx.scale(-1, 1);
+              ctx.drawImage(video, 0, 0, tileW, tileH);
+              ctx.restore();
+            }
+          }
+
+          this.shadowCloneAnimationFrame = requestAnimationFrame(() => {
+            this.renderShadowClones();
+          });
+        },
+
+        stopShadowCloneEffect() {
+          this.shadowCloneActive = false;
+          if (this.shadowCloneAnimationFrame) {
+            cancelAnimationFrame(this.shadowCloneAnimationFrame);
+            this.shadowCloneAnimationFrame = null;
+          }
+          const cloneCanvas = this.$refs.cloneCanvas;
+          if (cloneCanvas) {
+            const ctx = cloneCanvas.getContext('2d');
+            ctx.clearRect(0, 0, cloneCanvas.width, cloneCanvas.height);
+          }
+        },
         
         startEstimation() {
           this.estimateHands();
@@ -812,14 +896,25 @@
             }
 
             // Check for Shadow Clone Technique hand signs
-            if (this.currentHandGestures.left?.name === 'shadow_clone_technique_left' 
-                && this.currentHandGestures.left?.score > 9.6 
-                && this.currentHandGestures.right?.name === 'shadow_clone_technique_right' 
-                && this.currentHandGestures.right?.score > 9.6) {
+            const shadowCloneDetected = this.currentHandGestures.left?.name === 'shadow_clone_technique_left'
+                && this.currentHandGestures.left?.score > 9.6
+                && this.currentHandGestures.right?.name === 'shadow_clone_technique_right'
+                && this.currentHandGestures.right?.score > 9.6;
+
+            if (shadowCloneDetected) {
               this.currentJutsu = 'shadow-clone-technique';
               this.voiceCommandExpiryTime = new Date(Date.now() + 1000);
+              // Keep extending expiry while hand sign is held
+              if (this.shadowCloneActive) {
+                this.shadowCloneExpiryTime = Date.now() + 3000;
+              }
             }
-            
+
+            // Stop shadow clone effect when expiry has passed
+            if (this.shadowCloneActive && Date.now() > this.shadowCloneExpiryTime) {
+              this.stopShadowCloneEffect();
+            }
+
           } catch (error) {
             console.error('Error estimating hands:', error);
           }
