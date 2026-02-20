@@ -1,5 +1,7 @@
 # Shadow Clone Technique🧑‍🤝‍🧑
 
+![Naruto GIF](media/naruto.gif)
+
 ## Demo
 
 URL: [NARUTO.SS.MY](https://naruto.ss.my)
